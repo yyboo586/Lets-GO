@@ -1,8 +1,13 @@
 package main
 
-import "net/http"
+import (
+	"fmt"
+	"log"
+	"net/http"
+	"time"
+)
 
-func (app *application) routes() *http.ServeMux {
+func (app *application) routes() http.Handler {
 	mux := &http.ServeMux{}
 
 	fileServer := http.FileServer(http.Dir("./ui/static"))
@@ -12,5 +17,27 @@ func (app *application) routes() *http.ServeMux {
 	mux.HandleFunc("/snippet/list", app.snippetList)
 	mux.HandleFunc("/snippet/create", app.snippetCreate)
 
-	return mux
+	return panicRecover(secureHeaders(mux))
+}
+func secureHeaders(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+
+		next.ServeHTTP(w, r)
+
+		log.Printf("%s - %s %s %s %v\n", r.RemoteAddr, r.Proto, r.Method, r.RequestURI, time.Since(start))
+	})
+}
+
+func panicRecover(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if err := recover(); err != nil {
+				w.Header().Set("Connection", "close")
+				http.Error(w, fmt.Sprintf("%s", err), http.StatusInternalServerError)
+			}
+		}()
+
+		next.ServeHTTP(w, r)
+	})
 }
