@@ -1,14 +1,12 @@
 package main
 
 import (
-	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 	"text/template"
 )
 
-func index(w http.ResponseWriter, r *http.Request) {
+func (app *application) index(w http.ResponseWriter, r *http.Request) {
 	files := []string{
 		"./ui/html/base.html",
 		"./ui/html/pages/home.html",
@@ -16,23 +14,21 @@ func index(w http.ResponseWriter, r *http.Request) {
 	}
 	ts, err := template.ParseFiles(files...)
 	if err != nil {
-		log.Println(err)
-		http.Error(w, fmt.Sprintf("服务器内部错误: %v", err), http.StatusInternalServerError)
+		app.serverError(w, err)
 		return
 	}
 
 	err = ts.ExecuteTemplate(w, "base", nil)
 	if err != nil {
-		log.Println(err)
-		http.Error(w, fmt.Sprintf("服务器内部错误: %v", err), http.StatusInternalServerError)
+		app.serverError(w, err)
 		return
 	}
 }
 
-func create(w http.ResponseWriter, r *http.Request) {
+func (app *application) create(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		w.Header().Set("Allow", http.MethodPost)
-		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		app.clientError(w, http.StatusMethodNotAllowed)
 		return
 	}
 
@@ -41,14 +37,14 @@ func create(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("POST /create\n"))
 }
 
-func urlQueryParam(w http.ResponseWriter, r *http.Request) {
+func (app *application) urlQueryParam(w http.ResponseWriter, r *http.Request) {
 	name := r.URL.Query().Get("name")
 	age, err := strconv.Atoi(r.URL.Query().Get("age"))
-	if err != nil {
-		http.Error(w, fmt.Sprintf("参数错误: %v", err), http.StatusBadRequest)
+	if err != nil || age < 0 {
+		app.notFound(w)
 		return
 	}
 
-	log.Printf("name=%s, age=%d\n", name, age)
+	app.infoLogger.Printf("name=%s, age=%d\n", name, age)
 	w.WriteHeader(http.StatusOK)
 }
