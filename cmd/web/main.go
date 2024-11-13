@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"text/template"
 
 	"snippetbox/internal/models"
 
@@ -25,9 +26,10 @@ type config struct {
 }
 
 type application struct {
-	infoLogger  *log.Logger
-	errorLogger *log.Logger
-	snippets    *models.SnippetModel
+	infoLogger    *log.Logger
+	errorLogger   *log.Logger
+	snippets      *models.SnippetModel
+	templateCache map[string]*template.Template
 }
 
 func main() {
@@ -51,10 +53,16 @@ func main() {
 	}
 	defer dbPool.Close()
 
+	templateCache, err := newTemplateCache()
+	if err != nil {
+		errorLogger.Fatal(err)
+	}
+
 	app := &application{
-		infoLogger:  infoLogger,
-		errorLogger: errorLogger,
-		snippets:    &models.SnippetModel{DB: dbPool},
+		infoLogger:    infoLogger,
+		errorLogger:   errorLogger,
+		snippets:      &models.SnippetModel{DB: dbPool},
+		templateCache: templateCache,
 	}
 
 	srv := http.Server{

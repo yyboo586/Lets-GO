@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"net/http"
 	"runtime/debug"
+	"snippetbox/internal/models"
 )
 
 func (app *application) serverError(w http.ResponseWriter, err error) {
@@ -20,4 +22,22 @@ func (app *application) clientError(w http.ResponseWriter, status int) {
 
 func (app *application) notFound(w http.ResponseWriter) {
 	app.clientError(w, http.StatusNotFound)
+}
+
+func (app *application) render(w http.ResponseWriter, status int, page string, data *models.TemplateData) {
+	ts, ok := app.templateCache[page]
+	if !ok {
+		app.serverError(w, fmt.Errorf("the template %s does not exist", page))
+		return
+	}
+
+	buf := new(bytes.Buffer)
+	err := ts.ExecuteTemplate(buf, "base", data)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	w.WriteHeader(status)
+	buf.WriteTo(w)
 }
