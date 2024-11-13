@@ -43,7 +43,7 @@ func main() {
 	flag.StringVar(&config.DBName, "dbname", "snippetbox", "database name")
 	flag.Parse()
 
-	infoLogger := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
+	infoLogger := log.New(os.Stdout, "\033[0mINFO\t", log.Ldate|log.Ltime)
 	errorLogger := log.New(os.Stderr, "\033[31mERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
 
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?parseTime=true", config.DBUser, config.DBPassword, config.DBHost, config.DBPort, config.DBName)
