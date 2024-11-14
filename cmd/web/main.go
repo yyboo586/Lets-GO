@@ -1,7 +1,6 @@
 package main
 
 import (
-	"crypto/tls"
 	"database/sql"
 	"flag"
 	"fmt"
@@ -34,6 +33,7 @@ type application struct {
 	infoLogger     *log.Logger
 	errorLogger    *log.Logger
 	snippets       *models.SnippetModel
+	users          *models.UserModel
 	templateCache  map[string]*template.Template
 	formDecoder    *form.Decoder
 	sessionManager *scs.SessionManager
@@ -74,20 +74,21 @@ func main() {
 		infoLogger:     infoLogger,
 		errorLogger:    errorLogger,
 		snippets:       &models.SnippetModel{DB: dbPool},
+		users:          &models.UserModel{DB: dbPool},
 		templateCache:  templateCache,
 		formDecoder:    form.NewDecoder(),
 		sessionManager: sessionManager,
 	}
 
-	tlsConfig := &tls.Config{
-		CurvePreferences: []tls.CurveID{tls.X25519, tls.CurveP256},
-	}
+	// tlsConfig := &tls.Config{
+	// 	CurvePreferences: []tls.CurveID{tls.X25519, tls.CurveP256},
+	// }
 
 	srv := http.Server{
-		Addr:      config.Addr,
-		Handler:   app.routes(),
-		ErrorLog:  errorLogger,
-		TLSConfig: tlsConfig,
+		Addr:     config.Addr,
+		Handler:  app.routes(),
+		ErrorLog: errorLogger,
+		// TLSConfig: tlsConfig,
 
 		IdleTimeout:  time.Minute,
 		ReadTimeout:  5 * time.Second,
@@ -95,7 +96,10 @@ func main() {
 	}
 
 	infoLogger.Printf("Server listening at %s", config.Addr)
-	if err := srv.ListenAndServeTLS("./tls/cert.pem", "./tls/key.pem"); err != nil {
+	// if err := srv.ListenAndServeTLS("./tls/cert.pem", "./tls/key.pem"); err != nil {
+	// 	errorLogger.Fatal(err)
+	// }
+	if err := srv.ListenAndServe(); err != nil {
 		errorLogger.Fatal(err)
 	}
 }
