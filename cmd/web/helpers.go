@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"runtime/debug"
 	"snippetbox/internal/models"
+	"time"
 )
 
 func (app *application) serverError(w http.ResponseWriter, err error) {
@@ -40,4 +41,11 @@ func (app *application) render(w http.ResponseWriter, status int, page string, d
 
 	w.WriteHeader(status)
 	buf.WriteTo(w)
+}
+
+func (app *application) newTemplateData(r *http.Request) *models.TemplateData {
+	return &models.TemplateData{
+		CurrentYear: time.Now().Year(),
+		Flash:       app.sessionManager.PopString(r.Context(), "flash"),
+	}
 }

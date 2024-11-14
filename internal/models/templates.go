@@ -5,4 +5,5 @@ type TemplateData struct {
 	Snippet     *Snippet
 	Snippets    []*Snippet
 	Form        any
+	Flash       string
 }

@@ -47,10 +47,9 @@ func (app *application) snippetCreate(w http.ResponseWriter, r *http.Request) {
 	formData.CheckField(validator.PermittedInt(formData.Expires, 1, 7, 365), "expires", "This field must be equal to 1, 7 or 365")
 
 	if !formData.Valid() {
-		data := &models.TemplateData{
-			CurrentYear: time.Now().Year(),
-			Form:        formData,
-		}
+		data := app.newTemplateData(r)
+		data.Form = formData
+
 		app.render(w, http.StatusUnprocessableEntity, "create.html", data)
 		return
 	}
@@ -60,6 +59,8 @@ func (app *application) snippetCreate(w http.ResponseWriter, r *http.Request) {
 		app.serverError(w, err)
 		return
 	}
+
+	app.sessionManager.Put(r.Context(), "flash", "Snippet successfully created!")
 
 	// Redirect the user to the relevant page for the snippet.
 	http.Redirect(w, r, fmt.Sprintf("/snippet/views/%d", id), http.StatusSeeOther)
@@ -83,10 +84,8 @@ func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data := &models.TemplateData{
-		CurrentYear: time.Now().Year(),
-		Snippet:     snippet,
-	}
+	data := app.newTemplateData(r)
+	data.Snippet = snippet
 
 	app.render(w, http.StatusOK, "view.html", data)
 }
@@ -98,10 +97,9 @@ func (app *application) snippetList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data := &models.TemplateData{
-		CurrentYear: time.Now().Year(),
-		Snippets:    snippets,
-	}
+	data := app.newTemplateData(r)
+	data.Snippets = snippets
+
 	app.render(w, http.StatusOK, "home.html", data)
 }
 
